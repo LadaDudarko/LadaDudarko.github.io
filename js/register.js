@@ -1,35 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('register-form');
   
-  if (registerForm) {
-    registerForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+  registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+
+    try {
+      // 1. Регистрируем пользователя в Firebase Auth
+      const { user } = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      console.log("Пользователь зарегистрирован. UID:", user.uid); // Для отладки
+
+      // 2. Инициализируем Firestore
+      const db = firebase.firestore();
+
+      // 3. Сохраняем дополнительные данные в коллекцию "users"
+      await db.collection("users").doc(user.uid).set({
+        email: user.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Автоматическая дата
+        lastLogin: new Date().toISOString(),
+        status: "active"
+      });
+
+      // 4. Сохраняем email в localStorage для быстрого доступа
+      localStorage.setItem('currentUser', email);
       
-      const email = document.getElementById('reg-email').value.trim();
-      const password = document.getElementById('reg-password').value;
-
-      // Валидация email
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert("Введите корректный email (например: user@example.com)");
-        return;
-      }
-
-      try {
-        console.log("Регистрация:", email);
-        
-        // Сохраняем пользователя в localStorage
-        localStorage.setItem('currentUser', email);
-        alert("Регистрация успешна! 2.0");
-        
-        // Переход на страницу профиля
-        window.location.href = 'profile.html';
-        
-      } catch (error) {
-        console.error("Ошибка:", error);
-        alert("Произошла ошибка при регистрации");
-      }
-    });
-  }
+      // 5. Уведомление и переход
+      alert('Регистрация успешна 2.1 ! Данные сохранены.');
+      window.location.href = 'profile.html';
+      
+    } catch (error) {
+      console.error("Полная ошибка Firebase:", error);
+      alert(`Ошибка: ${error.message}`);
+    }
+  });
 });
-
-console.log("Firebase подключен:", firebase.app().name); // Должно вывести "[DEFAULT]"
