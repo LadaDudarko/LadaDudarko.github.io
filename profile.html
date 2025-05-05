@@ -69,6 +69,17 @@
         </main>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const user = Storage.getCurrentUser();
+          if (!user) {
+            window.location.href = 'register.html';
+          } else {
+            document.getElementById('user-email').textContent = user;
+          }
+        });
+      </script>
+      
     <script src="js/storage.js"></script>
     <script src="js/profile.js"></script>
 </body>
