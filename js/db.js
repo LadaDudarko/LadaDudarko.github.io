@@ -24,12 +24,12 @@ const PhotoStorage = {
     // Firebase Backup (бесплатный тариф)
     _initFirebase() {
       const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "your-app.firebaseapp.com",
-        projectId: "your-app",
-        storageBucket: "your-app.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyCS5o_2e38kfAhpH4x8GKWmclLWuPwNKpw",
+        authDomain: "kyrsovaya-bd3f2.firebaseapp.com",
+        projectId: "kyrsovaya-bd3f2",
+        storageBucket: "kyrsovaya-bd3f2.firebasestorage.app",
+        messagingSenderId: "122860451331",
+        appId: "1:122860451331:web:e0e5330e9e669f02e58036"
       };
       
       firebase.initializeApp(firebaseConfig);
