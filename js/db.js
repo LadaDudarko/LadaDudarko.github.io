@@ -58,3 +58,14 @@ const PhotoStorage = {
   
   // Инициализация при загрузке
   PhotoStorage.init();
+
+  import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
+const auth = getAuth();
+createUserWithEmailAndPassword(auth, "test@example.com", "password123")
+  .then((userCredential) => {
+    console.log("Аккаунт создан!", userCredential.user.uid);
+  })
+  .catch((error) => {
+    console.error("Ошибка регистрации:", error.message);
+  });
