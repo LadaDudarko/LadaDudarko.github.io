@@ -1,13 +1,24 @@
-// Подключаем Firebase
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { app } from "./db.js"; // Импортируем инициализированный Firebase
+// Вариант 1: Только модульная версия (Firebase 9+)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
 
-const auth = getAuth(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyCS5o_2e38kfAhpH4x8GKWmclLWuPwNKpw",
+  authDomain: "kyrsovaya-bd3f2.firebaseapp.com",
+  projectId: "kyrsovaya-bd3f2",
+  storageBucket: "kyrsovaya-bd3f2.firebasestorage.app",
+  messagingSenderId: "122860451331",
+  appId: "1:122860451331:web:e0e5330e9e669f02e58036"
+};
+
+// Инициализация
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Только это объявление!
 
 document.getElementById('register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const email = document.getElementById('reg-username').value + '@example.com'; // Делаем email
+  const email = document.getElementById('reg-username').value + '@example.com';
   const password = document.getElementById('reg-password').value;
 
   try {
@@ -21,7 +32,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   }
 });
 
-// Перевод ошибок Firebase
 function getFirebaseError(code) {
   const errors = {
     "auth/email-already-in-use": "Email уже занят",
