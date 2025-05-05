@@ -31,3 +31,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+console.log("Firebase подключен:", firebase.app().name); // Должно вывести "[DEFAULT]"
