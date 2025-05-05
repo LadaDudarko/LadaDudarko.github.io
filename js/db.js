@@ -69,3 +69,5 @@ createUserWithEmailAndPassword(auth, "test@example.com", "password123")
   .catch((error) => {
     console.error("Ошибка регистрации:", error.message);
   });
+
+  export const app = firebase.initializeApp(firebaseConfig);
