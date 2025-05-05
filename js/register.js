@@ -1,7 +1,3 @@
-// Вариант 1: Только модульная версия (Firebase 9+)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyCS5o_2e38kfAhpH4x8GKWmclLWuPwNKpw",
   authDomain: "kyrsovaya-bd3f2.firebaseapp.com",
@@ -11,32 +7,49 @@ const firebaseConfig = {
   appId: "1:122860451331:web:e0e5330e9e669f02e58036"
 };
 
-// Инициализация
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app); // Только это объявление!
+// Инициализация Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-document.getElementById('register-form').addEventListener('submit', async (e) => {
+document.getElementById('register-form').addEventListener('submit', (e) => {
   e.preventDefault();
   
-  const email = document.getElementById('reg-username').value + '@example.com';
+  const username = document.getElementById('reg-username').value.trim();
   const password = document.getElementById('reg-password').value;
+  const email = `${username}@example.com`; // Формируем email
 
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log("Успешная регистрация! UID:", userCredential.user.uid);
-    alert("Регистрация успешна!");
-    window.location.href = 'profile.html';
-  } catch (error) {
-    console.error("Ошибка:", error.code);
-    alert(`Ошибка: ${getFirebaseError(error.code)}`);
+  // Валидация пароля
+  if (password.length < 6 || password.length > 30) {
+    alert("Пароль должен быть от 6 до 30 символов!");
+    return;
   }
+
+  // Валидация логина
+  if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
+    alert("Логин должен содержать только латинские буквы, цифры и _ (от 3 до 30 символов)");
+    return;
+  }
+
+  console.log("Регистрируем:", email, password);
+
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      console.log("Успех! UID:", userCredential.user.uid);
+      alert("Регистрация успешна!");
+      window.location.href = 'profile.html';
+    })
+    .catch((error) => {
+      console.error("Ошибка Firebase:", error.code, error.message);
+      alert(`Ошибка: ${getFirebaseError(error.code)}`);
+    });
 });
 
 function getFirebaseError(code) {
   const errors = {
-    "auth/email-already-in-use": "Email уже занят",
+    "auth/email-already-in-use": "Этот логин уже занят",
     "auth/invalid-email": "Некорректный email",
-    "auth/weak-password": "Пароль слишком простой (минимум 6 символов)"
+    "auth/weak-password": "Пароль слишком простой (минимум 6 символов)",
+    "auth/network-request-failed": "Проблемы с интернет-соединением"
   };
-  return errors[code] || code;
+  return errors[code] || "Произошла ошибка. Попробуйте еще раз.";
 }
