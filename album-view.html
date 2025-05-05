@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр альбома</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="album-view-container">
+            <button id="back-to-albums" class="btn">← Назад к альбомам</button>
+            <h1 id="album-title"></h1>
+            <p id="album-date"></p>
+            
+            <div class="photos-grid" id="photos-grid">
+                <!-- Фотографии будут здесь -->
+            </div>
+            
+            <button id="add-photo-btn" class="btn primary-btn add-photo-btn">Добавить фотографию</button>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/album-view.js"></script>
+</body>
+</html>
