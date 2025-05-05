@@ -1,22 +1,18 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyCS5o_2e38kfAhpH4x8GKWmclLWuPwNKpw",
-  authDomain: "kyrsovaya-bd3f2.firebaseapp.com",
-  projectId: "kyrsovaya-bd3f2",
-  storageBucket: "kyrsovaya-bd3f2.firebasestorage.app",
-  messagingSenderId: "122860451331",
-  appId: "1:122860451331:web:e0e5330e9e669f02e58036"
-};
+const supabaseUrl = 'https://ваш-проект.supabase.co';
+const supabaseKey = 'ваш-публичный-ключ';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// Инициализация Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-document.getElementById('register-form').addEventListener('submit', (e) => {
+document.getElementById('register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const username = document.getElementById('reg-username').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
-  const email = `${username}@example.com`; // Формируем email
+
+  // Валидация email (если браузер не поддерживает type="email")
+  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    alert("Введите корректный email (например, user@example.com)");
+    return;
+  }
 
   // Валидация пароля
   if (password.length < 6 || password.length > 30) {
@@ -24,32 +20,22 @@ document.getElementById('register-form').addEventListener('submit', (e) => {
     return;
   }
 
-  // Валидация логина
-  if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
-    alert("Логин должен содержать только латинские буквы, цифры и _ (от 3 до 30 символов)");
-    return;
+  // Регистрация в Supabase
+  const { data, error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    alert(`Ошибка: ${error.message}`);
+  } else {
+    alert("Регистрация успешна! Проверьте почту для подтверждения.");
+    window.location.href = 'login.html';
   }
-
-  console.log("Регистрируем:", email, password);
-
-  firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      console.log("Успех! UID:", userCredential.user.uid);
-      alert("Регистрация успешна!");
-      window.location.href = 'profile.html';
-    })
-    .catch((error) => {
-      console.error("Ошибка Firebase:", error.code, error.message);
-      alert(`Ошибка: ${getFirebaseError(error.code)}`);
-    });
 });
 
-function getFirebaseError(code) {
-  const errors = {
-    "auth/email-already-in-use": "Этот логин уже занят",
-    "auth/invalid-email": "Некорректный email",
-    "auth/weak-password": "Пароль слишком простой (минимум 6 символов)",
-    "auth/network-request-failed": "Проблемы с интернет-соединением"
-  };
-  return errors[code] || "Произошла ошибка. Попробуйте еще раз.";
-}
+document.getElementById('reg-email').addEventListener('input', (e) => {
+  const email = e.target.value;
+  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    e.target.setCustomValidity("Введите корректный email");
+  } else {
+    e.target.setCustomValidity("");
+  }
+});

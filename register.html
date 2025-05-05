@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Фото-Облако | Регистрация</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="auth-container">
         <h1>Регистрация</h1>
         <form id="register-form">
-            <input type="text" id="reg-username" placeholder="Логин (от 3 до 30 символов)" 
-                   minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" title="Только латинские буквы, цифры и _" required>
+            <input type="email" id="reg-email" placeholder="Email (например, user@example.com)" 
+                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" 
+                   title="Введите корректный email" required>
             <input type="password" id="reg-password" placeholder="Пароль (от 6 до 30 символов)" 
                    minlength="6" maxlength="30" required>
             <button type="submit">Зарегистрироваться</button>
         </form>
         <p class="auth-switch">Уже есть аккаунт? <a href="login.html">Войти</a></p>
     </div>
-    <script src="js/register.js"></script> <!-- Убрал type="module" -->
+    <script src="js/register.js"></script>
 </body>
 </html>
