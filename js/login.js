@@ -1,20 +1,37 @@
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
   
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
 
-  // 1. Проверка в Supabase
-  const { data, error } = await supabase
-    .from('users')
-    .select()
-    .eq('email', email)
-    .eq('password', password);
+      // Валидация email
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+          alert("Введите корректный email!");
+          return;
+      }
 
-  if (error || data.length === 0) {
-    alert('Неверный email или пароль');
-  } else {
-    localStorage.setItem('currentUser', email); // Сохраняем вход локально
-    window.location.href = 'profile.html';
-  }
+      // Проверяем, есть ли пользователь в localStorage
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser && storedUser === email) {
+          // Сохраняем факт входа
+          localStorage.setItem('isLoggedIn', 'true');
+          // Переходим на страницу профиля
+          window.location.href = 'profile.html';
+      } else {
+          alert("Пользователь не найден. Зарегистрируйтесь.");
+      }
+  });
+
+  // Валидация email в реальном времени
+  document.getElementById('login-email').addEventListener('input', (e) => {
+      const email = e.target.value;
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+          e.target.setCustomValidity("Введите корректный email");
+      } else {
+          e.target.setCustomValidity("");
+      }
+  });
 });

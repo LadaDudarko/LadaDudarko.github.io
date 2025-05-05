@@ -1,25 +1,33 @@
-// Настройка Supabase (вставьте свои данные)
-const supabaseUrl = 'Вhttps://msosadsjjrqolwxwnuya.supabase.coАШ_PROJECT_URL';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zb3NhZHNqanJxb2x3eHdudXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NjMxOTksImV4cCI6MjA2MjAzOTE5OX0.ozGJ-IMsCtzhwHPc8juXyKshuosO80ZFAA17bhNepqk';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-// Обработчик формы регистрации
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+  const registerForm = document.getElementById('register-form');
   
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  if (registerForm) {
+    registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
 
-  // 1. Регистрация в Supabase
-  const { data, error } = await supabase
-    .from('users')
-    .insert([{ email, password }])
-    .select();
+      // Валидация email
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Введите корректный email (например: user@example.com)");
+        return;
+      }
 
-  if (error) {
-    alert('Ошибка: ' + error.message);
-  } else {
-    alert('Регистрация успешна! Версия кода 1.0');
-    window.location.href = 'profile.html';
+      try {
+        console.log("Регистрация:", email);
+        
+        // Сохраняем пользователя в localStorage
+        localStorage.setItem('currentUser', email);
+        alert("Регистрация успешна! 1.0");
+        
+        // Переход на страницу профиля
+        window.location.href = 'profile.html';
+        
+      } catch (error) {
+        console.error("Ошибка:", error);
+        alert("Произошла ошибка при регистрации");
+      }
+    });
   }
 });
