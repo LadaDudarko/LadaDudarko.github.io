@@ -19,7 +19,7 @@ form.addEventListener('submit', async (e) => {
   if (error) {
     alert('Ошибка: ' + error.message);
   } else {
-    alert('Регистрация успешна!');
+    alert('Регистрация успешна! Версия кода 1.0');
     window.location.href = 'profile.html';
   }
 });
