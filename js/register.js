@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Сохраняем пользователя в localStorage
         localStorage.setItem('currentUser', email);
-        alert("Регистрация успешна! 1.0");
+        alert("Регистрация успешна! 2.0");
         
         // Переход на страницу профиля
         window.location.href = 'profile.html';
