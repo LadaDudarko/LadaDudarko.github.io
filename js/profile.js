@@ -1,15 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (!checkAuth()) return;
-  
-  const currentUser = Storage.getCurrentUser();
+    // Проверка авторизации
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        window.location.href = 'register.html';
+        return;
+    }
 
+    // Элементы DOM
     const avatarUpload = document.getElementById('avatar-upload');
     const avatarImage = document.getElementById('avatar-image');
     const avatarIcon = document.getElementById('avatar-icon');
     const profileAvatar = document.getElementById('profile-avatar');
     
     // Загрузка сохранённого аватара
-    const savedAvatar = Storage.getUserData(currentUser, 'avatar');
+    const savedAvatar = localStorage.getItem(`${currentUser}_avatar`);
     if (savedAvatar) {
         avatarImage.src = savedAvatar;
         avatarImage.style.display = 'block';
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.onload = (event) => {
             // Сохраняем аватар
-            Storage.setUserData(currentUser, 'avatar', event.target.result);
+            localStorage.setItem(`${currentUser}_avatar`, event.target.result);
             
             // Отображаем аватар
             avatarImage.src = event.target.result;
@@ -53,72 +57,74 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     });
   
-  // Заполнение данных профиля с анимацией
-  function updateProfile() {
-      const elements = {
-          'first-name': Storage.getUserData(currentUser, 'firstName') || "Не указано",
-          'last-name': Storage.getUserData(currentUser, 'lastName') || "Не указано",
-          'city': Storage.getUserData(currentUser, 'city') || "Не указано",
-          'profession': Storage.getUserData(currentUser, 'profession') || "Не указано",
-          'price': Storage.getUserData(currentUser, 'price') || "Не указано"
-      };
-      
-      // Анимированное обновление значений
-      Object.keys(elements).forEach(id => {
-          const element = document.getElementById(id);
-          element.style.opacity = 0;
-          setTimeout(() => {
-              element.textContent = elements[id];
-              element.style.opacity = 1;
-              element.style.transition = 'opacity 0.3s ease';
-          }, 100);
-      });
-  }
-  
-  // Инициализация
-  updateProfile();
+    // Обновление данных профиля
+    function updateProfile() {
+        const profileData = {
+            'first-name': localStorage.getItem(`${currentUser}_firstName`) || "Не указано",
+            'last-name': localStorage.getItem(`${currentUser}_lastName`) || "Не указано",
+            'city': localStorage.getItem(`${currentUser}_city`) || "Не указано",
+            'profession': localStorage.getItem(`${currentUser}_profession`) || "Не указано",
+            'price': localStorage.getItem(`${currentUser}_price`) || "Не указано"
+        };
+        
+        // Анимированное обновление значений
+        Object.keys(profileData).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.opacity = 0;
+                setTimeout(() => {
+                    element.textContent = profileData[id];
+                    element.style.opacity = 1;
+                    element.style.transition = 'opacity 0.3s ease';
+                }, 100);
+            }
+        });
+    }
+    
+    // Инициализация профиля
+    updateProfile();
 
-  // Редактирование профиля
-  document.getElementById('edit-profile').addEventListener('click', () => {
-      const firstName = prompt("Имя:", Storage.getUserData(currentUser, 'firstName') || '');
-      const lastName = prompt("Фамилия:", Storage.getUserData(currentUser, 'lastName') || '');
-      const city = prompt("Город:", Storage.getUserData(currentUser, 'city') || '');
-      const profession = prompt("Род деятельности:", Storage.getUserData(currentUser, 'profession') || '');
-      const price = prompt("Стоимость съёмки:", Storage.getUserData(currentUser, 'price') || '');
+    // Редактирование профиля
+    document.getElementById('edit-profile').addEventListener('click', () => {
+        const firstName = prompt("Имя:", localStorage.getItem(`${currentUser}_firstName`) || '');
+        const lastName = prompt("Фамилия:", localStorage.getItem(`${currentUser}_lastName`) || '');
+        const city = prompt("Город:", localStorage.getItem(`${currentUser}_city`) || '');
+        const profession = prompt("Род деятельности:", localStorage.getItem(`${currentUser}_profession`) || '');
+        const price = prompt("Стоимость съёмки:", localStorage.getItem(`${currentUser}_price`) || '');
 
-      if (firstName !== null) Storage.setUserData(currentUser, 'firstName', firstName);
-      if (lastName !== null) Storage.setUserData(currentUser, 'lastName', lastName);
-      if (city !== null) Storage.setUserData(currentUser, 'city', city);
-      if (profession !== null) Storage.setUserData(currentUser, 'profession', profession);
-      if (price !== null) Storage.setUserData(currentUser, 'price', price);
-      
-      updateProfile();
-      
-      // Анимация успешного обновления
-      const card = document.querySelector('.profile-card');
-      card.style.transform = 'scale(1.02)';
-      setTimeout(() => {
-          card.style.transform = 'scale(1)';
-          card.style.transition = 'transform 0.3s ease';
-      }, 300);
-  });
+        if (firstName !== null) localStorage.setItem(`${currentUser}_firstName`, firstName);
+        if (lastName !== null) localStorage.setItem(`${currentUser}_lastName`, lastName);
+        if (city !== null) localStorage.setItem(`${currentUser}_city`, city);
+        if (profession !== null) localStorage.setItem(`${currentUser}_profession`, profession);
+        if (price !== null) localStorage.setItem(`${currentUser}_price`, price);
+        
+        updateProfile();
+        
+        // Анимация успешного обновления
+        const card = document.querySelector('.profile-card');
+        card.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            card.style.transform = 'scale(1)';
+            card.style.transition = 'transform 0.3s ease';
+        }, 300);
+    });
 
-  // Переход к альбомам
-  document.getElementById('view-albums').addEventListener('click', () => {
-      document.querySelector('.profile-content').style.opacity = 0;
-      setTimeout(() => {
-          window.location.href = 'albums.html';
-      }, 300);
-  });
+    // Переход к альбомам
+    document.getElementById('view-albums').addEventListener('click', () => {
+        document.querySelector('.profile-content').style.opacity = 0;
+        setTimeout(() => {
+            window.location.href = 'albums.html';
+        }, 300);
+    });
 
-  // Выход
-  document.getElementById('logout-btn').addEventListener('click', () => {
-      if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
-          document.querySelector('.profile-wrapper').style.animation = 'fadeOut 0.5s ease';
-          setTimeout(() => {
-              Storage.clearCurrentUser();
-              window.location.href = 'login.html';
-          }, 500);
-      }
-  });
+    // Выход
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
+            document.querySelector('.profile-wrapper').style.animation = 'fadeOut 0.5s ease';
+            setTimeout(() => {
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+            }, 500);
+        }
+    });
 });

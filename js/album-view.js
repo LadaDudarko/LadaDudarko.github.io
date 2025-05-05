@@ -1,22 +1,30 @@
-// Инициализация Supabase
-const supabaseUrl = 'https://yejqvggvucldtyplcezm.supabase.co';
-const supabaseKey = 'ваш_ключ';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверка авторизации
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        window.location.href = 'register.html';
+        return;
+    }
 
-document.addEventListener('DOMContentLoaded', async () => {
+    // Элементы DOM
     const backBtn = document.getElementById('back-to-albums');
     const albumTitle = document.getElementById('album-title');
     const albumDate = document.getElementById('album-date');
     const photosGrid = document.getElementById('photos-grid');
     const addPhotoBtn = document.getElementById('add-photo-btn');
-    const currentUser = Storage.getCurrentUser();
     
-    // Получаем ID альбома из URL (например: album-view.html?albumId=123)
-    const urlParams = new URLSearchParams(window.location.search);
-    const albumId = urlParams.get('albumId');
+    // Получаем ID альбома из localStorage
+    const albumId = localStorage.getItem('currentAlbumId');
+    if (!albumId) {
+        alert('Альбом не найден!');
+        window.location.href = 'albums.html';
+        return;
+    }
     
-    // Загружаем данные альбома
-    const album = Storage.getUserAlbums(currentUser).find(a => a.id === albumId);
+    // Загружаем альбомы пользователя
+    const albums = JSON.parse(localStorage.getItem(`${currentUser}_albums`)) || [];
+    const album = albums.find(a => a.id.toString() === albumId);
+    
     if (!album) {
         alert('Альбом не найден!');
         window.location.href = 'albums.html';
@@ -25,10 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Отображаем информацию об альбоме
     albumTitle.textContent = album.name;
-    albumDate.textContent = `Создан: ${new Date(album.createdAt).toLocaleDateString()}`;
+    albumDate.textContent = `Дата создания: ${album.date || 'не указана'}`;
     
     // Загружаем фотографии альбома
-    await loadAlbumPhotos(albumId);
+    loadAlbumPhotos(album);
     
     // Кнопка "Назад"
     backBtn.addEventListener('click', () => {
@@ -42,48 +50,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileInput.accept = 'image/*';
         fileInput.click();
         
-        fileInput.addEventListener('change', async (e) => {
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             
-            try {
-                // 1. Загружаем фото в Supabase Storage
-                const fileName = `${currentUser}_${albumId}_${Date.now()}_${file.name}`;
-                const { data, error } = await supabase.storage
-                    .from('photos')
-                    .upload(`albums/${albumId}/${fileName}`, file);
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Создаем уникальный ID для фото
+                const photoId = Date.now();
                 
-                if (error) throw error;
-                
-                // 2. Сохраняем ссылку в локальное хранилище
-                const photoUrl = supabase.storage
-                    .from('photos')
-                    .getPublicUrl(`albums/${albumId}/${fileName}`).data.publicUrl;
-                
-                const updatedAlbum = {
-                    ...album,
-                    photos: [...(album.photos || []), { id: fileName, url: photoUrl }]
+                // Добавляем фото в альбом
+                const newPhoto = {
+                    id: photoId,
+                    dataUrl: event.target.result,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
                 };
                 
-                Storage.setUserAlbums(
-                    currentUser,
-                    Storage.getUserAlbums(currentUser).map(a => 
-                        a.id === albumId ? updatedAlbum : a
-                    )
-                );
-                
-                // 3. Обновляем интерфейс
-                await loadAlbumPhotos(albumId);
-                alert('Фото успешно добавлено!');
-            } catch (error) {
-                alert(`Ошибка: ${error.message}`);
-            }
+                album.photos.push(newPhoto);
+                saveAlbums(albums);
+                loadAlbumPhotos(album);
+            };
+            reader.readAsDataURL(file);
         });
     });
     
     // Функция загрузки фотографий альбома
-    async function loadAlbumPhotos(albumId) {
-        const album = Storage.getUserAlbums(currentUser).find(a => a.id === albumId);
+    function loadAlbumPhotos(album) {
         photosGrid.innerHTML = '';
         
         if (!album.photos || album.photos.length === 0) {
@@ -95,40 +89,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const photoElement = document.createElement('div');
             photoElement.className = 'photo-item';
             photoElement.innerHTML = `
-                <img src="${photo.url}" alt="Фото">
+                <img src="${photo.dataUrl}" alt="${photo.name}">
                 <button class="delete-photo-btn" data-photo-id="${photo.id}">×</button>
             `;
             photosGrid.appendChild(photoElement);
             
             // Кнопка удаления фото
-            photoElement.querySelector('.delete-photo-btn').addEventListener('click', async () => {
+            photoElement.querySelector('.delete-photo-btn').addEventListener('click', () => {
                 if (!confirm('Удалить фотографию?')) return;
                 
-                try {
-                    // Удаляем из Supabase Storage
-                    await supabase.storage
-                        .from('photos')
-                        .remove([`albums/${albumId}/${photo.id}`]);
-                    
-                    // Удаляем из локального хранилища
-                    const updatedAlbum = {
-                        ...album,
-                        photos: album.photos.filter(p => p.id !== photo.id)
-                    };
-                    
-                    Storage.setUserAlbums(
-                        currentUser,
-                        Storage.getUserAlbums(currentUser).map(a => 
-                            a.id === albumId ? updatedAlbum : a
-                        )
-                    );
-                    
-                    // Обновляем интерфейс
-                    await loadAlbumPhotos(albumId);
-                } catch (error) {
-                    alert(`Ошибка удаления: ${error.message}`);
+                // Удаляем фото из альбома
+                const photoIndex = album.photos.findIndex(p => p.id === photo.id);
+                if (photoIndex !== -1) {
+                    album.photos.splice(photoIndex, 1);
+                    saveAlbums(albums);
+                    loadAlbumPhotos(album);
                 }
             });
         });
+    }
+    
+    // Сохранение альбомов в localStorage
+    function saveAlbums(albums) {
+        localStorage.setItem(`${currentUser}_albums`, JSON.stringify(albums));
     }
 });

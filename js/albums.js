@@ -1,128 +1,142 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (!checkAuth()) return;
-  
-  const currentUser = Storage.getCurrentUser();
-  let albums = Storage.getUserAlbums(currentUser) || [];
-  let currentPage = 1;
-  const ALBUMS_PER_PAGE = 6;
+    // Проверка авторизации
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        window.location.href = 'register.html';
+        return;
+    }
 
-  // Инициализация
-  renderAlbums();
+    // Загрузка альбомов из localStorage
+    let albums = JSON.parse(localStorage.getItem(`${currentUser}_albums`)) || [];
+    let currentPage = 1;
+    const ALBUMS_PER_PAGE = 6;
 
-  // Кнопка "Назад в профиль"
-  document.getElementById('back-to-profile').addEventListener('click', () => {
-      window.location.href = 'profile.html';
-  });
+    // Инициализация
+    renderAlbums();
 
-  // Добавление альбома
-  document.getElementById('add-album').addEventListener('click', () => {
-      const name = prompt("Введите название альбома:");
-      if (!name) return;
-      
-      const date = prompt("Введите дату съёмки (например, 01.01.2023):");
-      if (!date) return;
-      
-      const newAlbum = {
-          name,
-          date,
-          photos: []
-      };
-      
-      albums.unshift(newAlbum);
-      Storage.setUserAlbums(currentUser, albums);
-      currentPage = 1;
-      renderAlbums();
-  });
+    // Кнопка "Назад в профиль"
+    document.getElementById('back-to-profile').addEventListener('click', () => {
+        window.location.href = 'profile.html';
+    });
 
-  // Пагинация
-  document.getElementById('prev-page').addEventListener('click', () => {
-      if (currentPage > 1) {
-          currentPage--;
-          renderAlbums();
-      }
-  });
+    // Добавление альбома
+    document.getElementById('add-album').addEventListener('click', () => {
+        const name = prompt("Введите название альбома:");
+        if (!name) return;
+        
+        const date = prompt("Введите дату съёмки (например, 01.01.2023):");
+        if (!date) return;
+        
+        const newAlbum = {
+            id: Date.now(), // Уникальный ID для альбома
+            name,
+            date,
+            photos: []
+        };
+        
+        albums.unshift(newAlbum);
+        saveAlbums();
+        currentPage = 1;
+        renderAlbums();
+    });
 
-  document.getElementById('next-page').addEventListener('click', () => {
-      if (currentPage * ALBUMS_PER_PAGE < albums.length) {
-          currentPage++;
-          renderAlbums();
-      }
-  });
+    // Пагинация
+    document.getElementById('prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderAlbums();
+        }
+    });
 
-  function renderAlbums() {
-      const grid = document.getElementById('albums-grid');
-      const paginationInfo = document.getElementById('page-info');
-      grid.innerHTML = '';
+    document.getElementById('next-page').addEventListener('click', () => {
+        if (currentPage * ALBUMS_PER_PAGE < albums.length) {
+            currentPage++;
+            renderAlbums();
+        }
+    });
 
-      const startIndex = (currentPage - 1) * ALBUMS_PER_PAGE;
-      const endIndex = startIndex + ALBUMS_PER_PAGE;
-      const albumsToShow = albums.slice(startIndex, endIndex);
+    function renderAlbums() {
+        const grid = document.getElementById('albums-grid');
+        const paginationInfo = document.getElementById('page-info');
+        grid.innerHTML = '';
 
-      if (albums.length === 0) {
-          grid.innerHTML = '<p class="no-albums">У вас пока нет альбомов</p>';
-          paginationInfo.textContent = '';
-          return;
-      }
+        const startIndex = (currentPage - 1) * ALBUMS_PER_PAGE;
+        const endIndex = startIndex + ALBUMS_PER_PAGE;
+        const albumsToShow = albums.slice(startIndex, endIndex);
 
-      albumsToShow.forEach((album, index) => {
-          const globalIndex = startIndex + index;
-          const card = document.createElement('div');
-          card.className = 'album-card';
-          card.innerHTML = `
-              <h3>${album.name}</h3>
-              <p>Дата съёмки: ${album.date}</p>
-              <p>Фотографий: ${album.photos ? album.photos.length : 0}</p>
-              <div class="album-actions">
-                  <button class="view-album" data-index="${globalIndex}">Открыть альбом</button>
-                  <button class="delete-album" data-index="${globalIndex}">Удалить альбом</button>
-              </div>
-          `;
-          grid.appendChild(card);
-      });
+        if (albums.length === 0) {
+            grid.innerHTML = '<p class="no-albums">У вас пока нет альбомов</p>';
+            paginationInfo.textContent = '';
+            return;
+        }
 
-      // Обработчики для кнопок
-      document.querySelectorAll('.view-album').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-              const index = e.target.getAttribute('data-index');
-              openAlbumView(index);
-          });
-      });
+        albumsToShow.forEach((album, index) => {
+            const globalIndex = startIndex + index;
+            const card = document.createElement('div');
+            card.className = 'album-card';
+            card.innerHTML = `
+                <h3>${album.name}</h3>
+                <p>Дата съёмки: ${album.date}</p>
+                <p>Фотографий: ${album.photos.length}</p>
+                <div class="album-actions">
+                    <button class="view-album" data-id="${album.id}">Открыть альбом</button>
+                    <button class="delete-album" data-id="${album.id}">Удалить альбом</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
 
-      document.querySelectorAll('.delete-album').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-              const index = e.target.getAttribute('data-index');
-              deleteAlbum(index);
-          });
-      });
+        // Обработчики для кнопок
+        document.querySelectorAll('.view-album').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const albumId = parseInt(e.target.getAttribute('data-id'));
+                openAlbumView(albumId);
+            });
+        });
 
-      updatePagination();
-  }
+        document.querySelectorAll('.delete-album').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const albumId = parseInt(e.target.getAttribute('data-id'));
+                deleteAlbum(albumId);
+            });
+        });
 
-  function openAlbumView(index) {
-      // Сохраняем индекс альбома для использования в album-view.html
-      sessionStorage.setItem('currentAlbumIndex', index);
-      window.location.href = 'album-view.html';
-  }
+        updatePagination();
+    }
 
-  function deleteAlbum(index) {
-      if (confirm(`Вы уверены, что хотите удалить альбом "${albums[index].name}"?`)) {
-          albums.splice(index, 1);
-          Storage.setUserAlbums(currentUser, albums);
-          
-          if (albums.length <= (currentPage - 1) * ALBUMS_PER_PAGE && currentPage > 1) {
-              currentPage--;
-          }
-          
-          renderAlbums();
-      }
-  }
+    function openAlbumView(albumId) {
+        // Сохраняем ID альбома для просмотра
+        localStorage.setItem('currentAlbumId', albumId);
+        window.location.href = 'album-view.html';
+    }
 
-  function updatePagination() {
-      const paginationInfo = document.getElementById('page-info');
-      paginationInfo.textContent = `Страница ${currentPage} из ${Math.ceil(albums.length / ALBUMS_PER_PAGE)}`;
-      
-      document.getElementById('prev-page').disabled = currentPage === 1;
-      document.getElementById('next-page').disabled = 
-          currentPage === Math.ceil(albums.length / ALBUMS_PER_PAGE);
-  }
+    function deleteAlbum(albumId) {
+        const albumIndex = albums.findIndex(a => a.id === albumId);
+        if (albumIndex === -1) return;
+
+        if (confirm(`Вы уверены, что хотите удалить альбом "${albums[albumIndex].name}"?`)) {
+            albums.splice(albumIndex, 1);
+            saveAlbums();
+            
+            if (albums.length <= (currentPage - 1) * ALBUMS_PER_PAGE && currentPage > 1) {
+                currentPage--;
+            }
+            
+            renderAlbums();
+        }
+    }
+
+    function updatePagination() {
+        const paginationInfo = document.getElementById('page-info');
+        const totalPages = Math.ceil(albums.length / ALBUMS_PER_PAGE);
+        paginationInfo.textContent = `Страница ${currentPage} из ${totalPages || 1}`;
+        
+        document.getElementById('prev-page').disabled = currentPage === 1;
+        document.getElementById('next-page').disabled = 
+            currentPage === totalPages || totalPages === 0;
+    }
+
+    function saveAlbums() {
+        localStorage.setItem(`${currentUser}_albums`, JSON.stringify(albums));
+    }
 });

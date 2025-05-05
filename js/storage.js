@@ -1,58 +1,64 @@
-const supabaseUrl = 'https://yejqvggvucldtyplcezm.supabase.co';
-const supabaseKey = 'ваш_ключ';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
 const Storage = {
-  // ===== Локальное хранилище (оставляем как было) =====
+  // Работа с пользователями
   getUsers: () => JSON.parse(localStorage.getItem('users')) || [],
   setUsers: (users) => localStorage.setItem('users', JSON.stringify(users)),
+  
+  // Текущий пользователь
   getCurrentUser: () => localStorage.getItem('currentUser'),
-  setCurrentUser: (username) => localStorage.setItem('currentUser', username),
+  setCurrentUser: (email) => localStorage.setItem('currentUser', email),
   clearCurrentUser: () => localStorage.removeItem('currentUser'),
-  getUserAlbums: (username) => JSON.parse(localStorage.getItem(`${username}_albums`)) || [],
-  setUserAlbums: (username, albums) => localStorage.setItem(`${username}_albums`, JSON.stringify(albums)),
-
-  // ===== Supabase Storage =====
-  async uploadPhoto(file, userId) {
-    const fileName = `${userId}_${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage
-      .from('photos')
-      .upload(`users/${userId}/${fileName}`, file);
-
-    if (error) throw new Error(`Ошибка загрузки: ${error.message}`);
-    return fileName;
+  
+  // Данные пользователя
+  getUserData: (email, key) => {
+      const data = JSON.parse(localStorage.getItem(`${email}_data`)) || {};
+      return key ? data[key] : data;
   },
-
-  async getPhotoUrl(fileName) {
-    const { data } = supabase.storage
-      .from('photos')
-      .getPublicUrl(`users/${userId}/${fileName}`);
-    return data.publicUrl;
+  setUserData: (email, key, value) => {
+      const data = JSON.parse(localStorage.getItem(`${email}_data`)) || {};
+      data[key] = value;
+      localStorage.setItem(`${email}_data`, JSON.stringify(data));
   },
-
-  async deletePhoto(fileName) {
-    const { error } = await supabase.storage
-      .from('photos')
-      .remove([`users/${userId}/${fileName}`]);
-    if (error) throw new Error(`Ошибка удаления: ${error.message}`);
+  
+  // Альбомы пользователя
+  getUserAlbums: (email) => JSON.parse(localStorage.getItem(`${email}_albums`)) || [],
+  setUserAlbums: (email, albums) => localStorage.setItem(`${email}_albums`, JSON.stringify(albums)),
+  
+  // Фото в альбомах (хранятся как Data URLs)
+  addPhotoToAlbum: (email, albumId, photoData) => {
+      const albums = JSON.parse(localStorage.getItem(`${email}_albums`)) || [];
+      const album = albums.find(a => a.id === albumId);
+      if (album) {
+          album.photos = album.photos || [];
+          album.photos.push(photoData);
+          localStorage.setItem(`${email}_albums`, JSON.stringify(albums));
+      }
+  },
+  
+  // Удаление фото из альбома
+  removePhotoFromAlbum: (email, albumId, photoId) => {
+      const albums = JSON.parse(localStorage.getItem(`${email}_albums`)) || [];
+      const album = albums.find(a => a.id === albumId);
+      if (album && album.photos) {
+          album.photos = album.photos.filter(p => p.id !== photoId);
+          localStorage.setItem(`${email}_albums`, JSON.stringify(albums));
+      }
   }
 };
 
-// Валидация (оставляем без изменений)
+// Валидация
 const Validator = {
-  username: (value) => /^[A-Za-z0-9_\-]{1,30}$/.test(value),
-  password: (value) => /^[A-Za-z0-9!@#$%^&*]{1,15}$/.test(value),
-  sanitizeUsername: (value) => value.replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 30),
-  sanitizePassword: (value) => value.replace(/[^A-Za-z0-9!@#$%^&*]/g, '').slice(0, 15)
+  email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+  password: (value) => value.length >= 6 && value.length <= 30,
+  sanitizeInput: (value) => value.trim()
 };
 
-// Проверка авторизации (без изменений)
+// Проверка авторизации
 function checkAuth() {
-  const protectedPages = ['profile.html', 'albums.html'];
+  const protectedPages = ['profile.html', 'albums.html', 'album-view.html'];
   const currentPage = window.location.pathname.split('/').pop();
   if (protectedPages.includes(currentPage) && !Storage.getCurrentUser()) {
-    window.location.href = 'login.html';
-    return false;
+      window.location.href = 'login.html';
+      return false;
   }
   return true;
 }
