@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. Сохраняем данные пользователя
       localStorage.setItem('currentUser', email);
       console.log("Вход выполнен 1.0:", user.uid);
+      alert('Вход выполнен 1.0');
       
       // 3. Перенаправляем в профиль
       window.location.href = 'profile.html';
